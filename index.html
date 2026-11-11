@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="Seu assistente pessoal JARVIS.">
+  <title>J.A.R.V.I.S.</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <style>
+    :root{color-scheme:dark;--bg:#050b14;--panel:#0c1b2b;--line:#163b57;--blue:#55c9ff;--muted:#9db5c8}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(ellipse at 50% 0%,#102b43 0%,var(--bg) 55%);color:#eaf7ff;font:16px system-ui,Arial,sans-serif;min-height:100vh}
+    main{max-width:720px;margin:auto;padding:24px 16px 36px;display:flex;flex-direction:column;gap:16px}
+    header{text-align:center;padding-top:12px}
+    .brand{letter-spacing:.24em;color:var(--blue);font-size:clamp(25px,7vw,38px);font-weight:700;text-shadow:0 0 22px #168dcc}
+    .status{color:#80d7ff;font-size:11px;letter-spacing:.2em;margin-top:5px}
+    .orb{width:136px;height:136px;margin:22px auto 14px;border-radius:50%;border:1px solid #2a8fbe;display:grid;place-items:center;background:radial-gradient(circle,#164d70 0%,#0b2238 48%,#07111f 72%);box-shadow:0 0 22px #0879ad66,inset 0 0 28px #1aa9ef55}
+    .orb span{font-size:58px;color:#7bddff;text-shadow:0 0 24px #28bfff}
+    .panel{background:#0b1928eF;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 12px 36px #0005}
+    #reply{white-space:pre-wrap;line-height:1.55;min-height:72px}
+    label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
+    input,textarea{width:100%;border:1px solid #244760;border-radius:12px;background:#06111d;color:white;padding:13px;font:inherit;outline:none}
+    textarea{min-height:76px;resize:vertical}
+    button{border:1px solid #287ca8;background:linear-gradient(180deg,#174d70,#10324d);color:#effaff;border-radius:12px;padding:13px 15px;font-weight:700;font-size:14px;min-height:46px}
+    button:disabled{opacity:.45}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .actions .wide{grid-column:1/-1}
+    .secondary{background:#101d2a;border-color:#294052}
+    .hint{font-size:12px;line-height:1.5;color:var(--muted)}
+    .chatlog{display:flex;flex-direction:column;gap:10px;max-height:35vh;overflow:auto}
+    .msg{padding:10px 12px;border-radius:12px;white-space:pre-wrap;line-height:1.4;font-size:14px}
+    .user{background:#12334a;align-self:flex-end;max-width:90%}
+    .jarvis{background:#101e2d;border:1px solid #1d4058;align-self:flex-start;max-width:95%}
+    details summary{color:var(--blue);cursor:pointer}
+    .foot{text-align:center;color:#718da3;font-size:11px}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand">J.A.R.V.I.S.</div>
+    <div class="status" id="status">SISTEMA PRONTO • AGUARDANDO</div>
+    <div class="orb"><span>◉</span></div>
+    <div style="color:#a9c8dc">Às suas ordens.</div>
+  </header>
+
+  <section class="panel">
+    <div id="reply">Olá, senhor. Sou o JARVIS. Toque no microfone ou escreva sua pergunta para começarmos.</div>
+  </section>
+
+  <section class="panel">
+    <label for="question">Sua mensagem</label>
+    <textarea id="question" placeholder="Diga ou escreva o que precisa..."></textarea>
+    <div class="actions" style="margin-top:10px">
+      <button id="mic">🎙 FALAR</button>
+      <button id="send">ENVIAR</button>
+      <button id="say" class="secondary">🔊 OUVIR RESPOSTA</button>
+      <button id="clear" class="secondary">LIMPAR CONVERSA</button>
+    </div>
+    <p class="hint">O reconhecimento de voz depende do Chrome e da conexão. Nesta versão, você toca no microfone para falar; ainda não existe escuta contínua da frase “Olá, Jarvis”.</p>
+  </section>
+
+  <section class="panel">
+    <strong>Conversa</strong>
+    <div class="chatlog" id="chatlog" style="margin-top:12px"></div>
+  </section>
+
+  <section class="panel">
+    <details>
+      <summary>⚙ Configurar inteligência artificial</summary>
+      <label for="key">Chave API do Google AI Studio</label>
+      <input id="key" type="password" autocomplete="off" placeholder="Cole sua chave aqui">
+      <label for="model">Modelo Gemini</label>
+      <input id="model" value="gemini-3.8-flash">
+      <button id="save" class="wide" style="margin-top:12px;width:100%">SALVAR CONFIGURAÇÃO</button>
+      <p class="hint">A chave fica salva somente neste navegador. Não compartilhe este site com sua chave configurada e não publique a chave. A API gratuita tem limites e pode mudar. Para uso público, a chave precisa ficar num servidor protegido.</p>
+      <p class="hint">Crie sua chave em <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:#7bddff">Google AI Studio</a>. Nunca envie sua chave aqui no chat.</p>
+    </details>
+  </section>
+  <div class="foot">JARVIS • Protótipo pessoal • A voz depende das opções instaladas no Android</div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let lastReply = "Olá, senhor. Sou o JARVIS.";
+let history = [];
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function setStatus(t){ $("status").textContent = t; }
+function addMessage(text, who){
+  const div=document.createElement("div");
+  div.className="msg "+who;
+  div.textContent=text;
+  $("chatlog").appendChild(div);
+  $("chatlog").scrollTop=$("chatlog").scrollHeight;
+}
+function speak(text){
+  if(!("speechSynthesis" in window)){ setStatus("VOZ NÃO DISPONÍVEL NESTE NAVEGADOR"); return; }
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang="pt-BR"; u.rate=0.94; u.pitch=0.82;
+  const voices=speechSynthesis.getVoices();
+  const pt=voices.filter(v=>v.lang && v.lang.toLowerCase().startsWith("pt"));
+  const preferred=pt.find(v=>/male|mascul|ricardo|daniel/i.test(v.name)) || pt[0];
+  if(preferred) u.voice=preferred;
+  speechSynthesis.speak(u);
+}
+function saveSettings(){
+  localStorage.setItem("jarvis_key",$("key").value.trim());
+  localStorage.setItem("jarvis_model",$("model").value.trim() || "gemini-3.8-flash");
+  setStatus("CONFIGURAÇÃO SALVA NESTE NAVEGADOR");
+}
+$("key").value=localStorage.getItem("jarvis_key")||"";
+$("model").value=localStorage.getItem("jarvis_model")||"gemini-3.8-flash";
+$("save").addEventListener("click",saveSettings);
+$("say").addEventListener("click",()=>speak(lastReply));
+$("clear").addEventListener("click",()=>{history=[];$("chatlog").innerHTML="";$("reply").textContent="Conversa limpa, senhor.";lastReply=$("reply").textContent;});
+$("mic").addEventListener("click",()=>{
+  if(!SpeechRecognition){setStatus("RECONHECIMENTO DE VOZ NÃO SUPORTADO");$("reply").textContent="Senhor, este navegador não oferece reconhecimento de voz. Tente o Google Chrome atualizado.";return;}
+  const rec=new SpeechRecognition(); rec.lang="pt-BR";rec.interimResults=false;rec.maxAlternatives=1;
+  $("mic").disabled=true;setStatus("ESCUTANDO...");
+  rec.onresult=e=>{$("question").value=e.results[0][0].transcript;setStatus("VOZ RECONHECIDA");};
+  rec.onerror=e=>{setStatus("FALHA NO MICROFONE: "+e.error);};
+  rec.onend=()=>{$("mic").disabled=false;if($("status").textContent==="ESCUTANDO...")setStatus("SISTEMA PRONTO");};
+  try{rec.start();}catch(e){$("mic").disabled=false;setStatus("NÃO FOI POSSÍVEL INICIAR O MICROFONE");}
+});
+async function ask(){
+  const q=$("question").value.trim(); if(!q)return;
+  const key=localStorage.getItem("jarvis_key");
+  if(!key){$("reply").textContent="Senhor, primeiro configure sua chave da API na seção de configurações.";setStatus("FALTA CONFIGURAR A API");return;}
+  addMessage(q,"user"); $("question").value=""; $("send").disabled=true;setStatus("JARVIS PROCESSANDO...");
+  const system="Você é JARVIS, assistente pessoal de voz em português brasileiro. Fale de forma natural, inteligente, educada, calorosa e objetiva, com personalidade própria e humor discreto. Chame a pessoa de senhor ocasionalmente, sem exagerar. Nunca afirme ser humano. Seja honesto quando não souber algo.";
+  const contents=[...history,{role:"user",parts:[{text:q}]}];
+  try{
+    const model=localStorage.getItem("jarvis_model")||"gemini-3.8-flash";
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({system_instruction:{parts:[{text:system}]},contents,generationConfig:{temperature:0.8,maxOutputTokens:700}})
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error?.message||("Erro HTTP "+res.status));
+    const answer=data.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
+    if(!answer)throw new Error("A IA não retornou uma resposta.");
+    history.push({role:"user",parts:[{text:q}]},{role:"model",parts:[{text:answer}]});
+    if(history.length>16)history=history.slice(-16);
+    lastReply=answer;$("reply").textContent=answer;addMessage(answer,"jarvis");speak(answer);setStatus("JARVIS ONLINE");
+  }catch(err){lastReply="Senhor, não consegui responder: "+err.message;$("reply").textContent=lastReply;addMessage(lastReply,"jarvis");setStatus("ERRO NA CONEXÃO");}
+  finally{$("send").disabled=false;}
+}
+$("send").addEventListener("click",ask);
+$("question").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ask();}});
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
+if("speechSynthesis" in window)speechSynthesis.onvoiceschanged=()=>{};
+</script>
+</body>
+</html>
